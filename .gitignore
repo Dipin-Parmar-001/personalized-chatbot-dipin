@@ -1,0 +1,7 @@
+.env
+venv
+index2.html
+index.html
+backend/__pycache__/
+__pycache__/
+chroma_db/
