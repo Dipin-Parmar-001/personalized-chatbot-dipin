@@ -129,7 +129,6 @@ def get_response(user_query: str, vector_db) -> str:
 
 def log_missing_query(query: str) -> None:
     """Appends unanswered questions to a tracking CSV for future updates."""
-    file_path = "required_updates.csv"
     new_row = {
         "query": query,
         "status": "Pending"
