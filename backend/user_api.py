@@ -18,6 +18,13 @@ app.add_middleware(
 
 vector_db = get_or_create_vector_db()
 
+@app.on_event("startup")
+async def startup_event():
+    from data_processing import sync_csv_to_chroma
+    # This will pull everything from Supabase and put it in Chroma 
+    # every time Render wakes the app up.
+    sync_csv_to_chroma()
+    
 # schemas
 
 class QueryRequest(BaseModel):
