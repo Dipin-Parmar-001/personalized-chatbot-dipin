@@ -34,7 +34,7 @@ def get_or_create_vector_db() -> Chroma:
     return vector_db
 
 
-def sync_csv_to_chroma(csv_path: str) -> Chroma:
+def sync_csv_to_chroma(csv_path: str = None) -> Chroma:
     """
     One-time sync: reads a CSV and upserts its rows into Chroma.
     Skips the sync if data already exists (idempotent).
