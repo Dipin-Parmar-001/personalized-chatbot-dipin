@@ -8,7 +8,7 @@ from supabase_client import supabase
 from data_processing import get_or_create_vector_db
 from langchain_core.documents import Document
 from fastapi import FastAPI, HTTPException, Security, Depends
-from fastapi.security import API_KEY_HEADER, APIKeyHeader
+from fastapi.security import APIKeyHeader
 from starlette.status import HTTP_403_FORBIDDEN
 
 app = FastAPI(title="Dipin's AI Admin API")
