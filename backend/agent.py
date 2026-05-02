@@ -110,7 +110,7 @@ def get_response(user_query: str, vector_db) -> str:
     """Retrieves relevant context and returns an LLM-generated answer."""
     results = vector_db.similarity_search_with_relevance_scores(user_query, k=20)
 
-    if not results or results[0][1] < 0.5:
+    if not results or results[0][1] < 0.3:
         log_missing_query(user_query)
         return (
             "I am sorry, I don't have that specific detail about Dipen yet, "
@@ -128,6 +128,7 @@ def get_response(user_query: str, vector_db) -> str:
 
 
 def log_missing_query(query: str) -> None:
+
     new_row = {
         "query": query,
         "status": "Pending"

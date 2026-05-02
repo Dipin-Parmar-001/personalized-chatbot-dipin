@@ -8,7 +8,7 @@ from supabase_client import supabase
 from data_processing import get_or_create_vector_db
 from langchain_core.documents import Document
 from fastapi import FastAPI, HTTPException, Security, Depends
-from fastapi.security import API_KEY_HEADER, APIKeyHeader
+from fastapi.security import APIKeyHeader
 from starlette.status import HTTP_403_FORBIDDEN
 
 app = FastAPI(title="Dipin's AI Admin API")
@@ -32,6 +32,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+async def startup_event():
+    from data_processing import sync_csv_to_chroma
+    sync_csv_to_chroma() # No more error!
+    
 # schemas
 
 class StatusUpdate(BaseModel):
