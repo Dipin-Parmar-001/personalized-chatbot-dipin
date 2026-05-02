@@ -128,18 +128,22 @@ def get_response(user_query: str, vector_db) -> str:
 
 
 def log_missing_query(query: str) -> None:
-    """Appends unanswered questions to a tracking CSV for future updates."""
-    file_path = "required_updates.csv"
     new_row = {
         "query": query,
         "status": "Pending"
     }
-    try: 
-        supabase.table("required_updates").insert(new_row).execute()
-        logger.info("📌 Logged missing query: '%s'", query)
-    except Exception as e:
-        logger.error("Failed to log missing query: %s", e)
 
+    try:
+        response = supabase.table("required_updates").insert(new_row).execute()
+
+        # ✅ CHECK RESPONSE PROPERLY
+        if response.data:
+            logger.info("📌 Logged missing query: '%s'", query)
+        else:
+            logger.error(f"❌ Insert failed. Response: {response}")
+
+    except Exception as e:
+        logger.error("❌ Exception while logging missing query: %s", e)
 
 # ---------------------------------------------------------------------------
 # Booking flow
