@@ -110,11 +110,13 @@ def get_response(user_query: str, vector_db) -> str:
     """Retrieves relevant context and returns an LLM-generated answer."""
     results = vector_db.similarity_search_with_relevance_scores(user_query, k=20)
 
-    # DEBUG: log the top score so you can tune the threshold in Render logs
+    # DEBUG: log the top score to help with diagnostics
     top_score = results[0][1] if results else None
     logger.info("🔎 Top similarity score for query '%s': %s", user_query, top_score)
 
-    if not results or top_score < 0.2:  # Lowered from 0.3 → tune based on Render logs
+    # If Chroma has absolutely nothing, log immediately without hitting the LLM
+    if not results or top_score < 0.1:
+        logger.info("📭 No relevant context found for: '%s' — logging as missing.", user_query)
         log_missing_query(user_query)
         return (
             "I am sorry, I don't have that specific detail about Dipen yet, "
@@ -128,7 +130,26 @@ def get_response(user_query: str, vector_db) -> str:
 
     chain = rag_prompt | llm
     response = chain.invoke({"context": context, "question": user_query})
-    return response.content
+    answer = response.content
+
+    # ✅ THE REAL FIX:
+    # Chroma scores can be high even when the context doesn't answer the question.
+    # The LLM is the true judge — if it says it doesn't know, log the query.
+    UNANSWERED_SIGNALS = [
+        "i am sorry, but i don't have",
+        "i don't have that information",
+        "i am sorry, i don't have",
+        "i don't have that specific",
+        "i haven't been provided",
+        "i have noted it down",
+        "i don't have enough information",
+    ]
+
+    if any(signal in answer.lower() for signal in UNANSWERED_SIGNALS):
+        logger.info("🤖 LLM flagged query as unanswerable: '%s' — logging as missing.", user_query)
+        log_missing_query(user_query)
+
+    return answer
 
 
 def log_missing_query(query: str) -> None:
