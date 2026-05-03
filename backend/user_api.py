@@ -5,6 +5,8 @@ from typing import Optional
 import agent as agent
 import tools as tools
 from data_processing import get_or_create_vector_db
+from supabase_client import supabase
+import os
 
 app = FastAPI(title="Dipin's AI User API")
 
@@ -70,3 +72,33 @@ async def submit_booking(request: BookingRequest):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# -----------------------------------------------------------------------
+# DEBUG ENDPOINT — Call this once on Render to verify Supabase connectivity
+# Remove this endpoint after confirming inserts work in production
+# -----------------------------------------------------------------------
+
+@app.get("/api/test-insert")
+async def test_insert():
+    """
+    Directly tests inserting a row into required_updates.
+    Returns the full Supabase response so you can see any RLS/key errors.
+    """
+    try:
+        test_row = {"query": "__TEST_QUERY__ delete this row", "status": "Pending"}
+        response = supabase.table("required_updates").insert(test_row).execute()
+
+        return {
+            "supabase_url": os.getenv("SUPABASE_URL", "NOT SET"),
+            "key_prefix": (os.getenv("SUPABASE_KEY") or "")[:12] + "...",  # shows first 12 chars only
+            "insert_data_returned": response.data,
+            "success": bool(response.data),
+            "message": "✅ Insert worked!" if response.data else "❌ Insert returned empty — likely RLS block or wrong key"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "❌ Exception during insert — check credentials"
+        }
