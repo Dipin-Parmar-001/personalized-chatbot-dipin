@@ -110,7 +110,11 @@ def get_response(user_query: str, vector_db) -> str:
     """Retrieves relevant context and returns an LLM-generated answer."""
     results = vector_db.similarity_search_with_relevance_scores(user_query, k=20)
 
-    if not results or results[0][1] < 0.3:
+    # DEBUG: log the top score so you can tune the threshold in Render logs
+    top_score = results[0][1] if results else None
+    logger.info("🔎 Top similarity score for query '%s': %s", user_query, top_score)
+
+    if not results or top_score < 0.2:  # Lowered from 0.3 → tune based on Render logs
         log_missing_query(user_query)
         return (
             "I am sorry, I don't have that specific detail about Dipen yet, "
@@ -141,10 +145,14 @@ def log_missing_query(query: str) -> None:
         if response.data:
             logger.info("📌 Logged missing query: '%s'", query)
         else:
-            logger.error(f"❌ Insert failed. Response: {response}")
+            # Log the FULL response so you can see RLS/permission errors in Render logs
+            logger.error(
+                "❌ Insert to required_updates returned no data (possible RLS block). "
+                "Full response: %s", response
+            )
 
     except Exception as e:
-        logger.error("❌ Exception while logging missing query: %s", e)
+        logger.error("❌ Exception while logging missing query: %s", e, exc_info=True)
 
 # ---------------------------------------------------------------------------
 # Booking flow
